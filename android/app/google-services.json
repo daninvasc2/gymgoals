@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "399261935524",
+    "project_id": "gymgoals-47a63",
+    "storage_bucket": "gymgoals-47a63.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:399261935524:android:8c6b40bdc2636370d00331",
+        "android_client_info": {
+          "package_name": "com.example.metas_academia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "399261935524-v92i0bqre7uk51st7c8ne1283rjgb2js.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZBOmGWkFj6r-Co7Su7fiJhcbZ8-6R1_g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "399261935524-v92i0bqre7uk51st7c8ne1283rjgb2js.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "399261935524-k7kngsr0jobevu0espvurpogknppm4h7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.gym.goals"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
