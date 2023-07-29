@@ -1,10 +1,8 @@
 # metas_academia
 
-A new Flutter project.
+Trabalho de faculdade para a matéria de tópicos avançados.
 
 ## Getting Started
-
-Trabalho de faculdade para a matéria de tópicos avançados.
 
 A few resources to get you started if this is your first Flutter project:
 
