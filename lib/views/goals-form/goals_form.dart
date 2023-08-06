@@ -3,6 +3,8 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import '../../models/goals.dart';
 import 'package:intl/intl.dart';
+import '../../helper.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GoalsForm extends StatefulWidget {
   const GoalsForm({super.key});
@@ -14,6 +16,16 @@ class GoalsForm extends StatefulWidget {
 
 class _GoalsFormState extends State<GoalsForm> {
   final GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
+
+  Future<String> createGoal(Goals goal) async {
+  try {
+    final DocumentReference docRef = await FirebaseFirestore.instance.collection('goals').add(goal.toJson());
+    return docRef.id;
+  } catch (error) {
+    showToast('Erro ao criar meta: $error');
+    return '';
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +50,14 @@ class _GoalsFormState extends State<GoalsForm> {
               ),
               const SizedBox(height: 16),
               FormBuilderDateTimePicker(
+                name: 'startDate',
+                inputType: InputType.date,
+                format: DateFormat('dd/MM/yyyy'),
+                decoration: const InputDecoration(labelText: 'Data de início'),
+                validator: FormBuilderValidators.required(errorText: 'Campo obrigatório.'),
+              ),
+              const SizedBox(height: 16),
+              FormBuilderDateTimePicker(
                 name: 'expirationDate',
                 inputType: InputType.date,
                 format: DateFormat('dd/MM/yyyy'),
@@ -56,17 +76,18 @@ class _GoalsFormState extends State<GoalsForm> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_fbKey.currentState!.saveAndValidate()) {
                     Goals newGoal = Goals(
                       name: _fbKey.currentState!.value['name'],
                       description: _fbKey.currentState!.value['description'],
-                      imageUrl: '', // You can add the image URL logic here if needed
+                      startDate: _fbKey.currentState!.value['startDate'],
                       expirationDate: _fbKey.currentState!.value['expirationDate'],
                       goalValue: num.parse(_fbKey.currentState!.value['goalValue']),
                     );
 
-                    Navigator.pop(context); // Navigate back to the previous screen after saving.
+                    String? newGoalId = await createGoal(newGoal);
+                    Navigator.pop(context, newGoalId);
                   }
                 },
                 child: const Text('Salvar'),

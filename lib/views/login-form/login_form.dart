@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:metas_academia/views/homepage/homepage.dart';
 import 'package:metas_academia/views/login-form/registration_form.dart';
 import 'package:metas_academia/models/current_user.dart';
+import '../../helper.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -69,14 +69,6 @@ class _LoginFormState extends State<LoginForm> {
         }
       }
     }
-  }
-
-  void showToast(String message) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-    );
   }
 
   void redirectToHomePage(CurrentUser currentUser) {

@@ -8,8 +8,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:metas_academia/views/homepage/homepage.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:metas_academia/models/current_user.dart';
+import '../../helper.dart';
 
 class RegistrationForm extends StatefulWidget {
   const RegistrationForm({super.key});
@@ -81,14 +81,6 @@ class _RegistrationFormState extends State<RegistrationForm> {
         }
       }
     }
-  }
-
-  void showToast(String message) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-    );
   }
 
   void redirectToHomePage(CurrentUser currentUser) {

@@ -1,14 +1,14 @@
 class Goals {
   final String name;
   final String description;
-  final String imageUrl;
+  final DateTime startDate;
   final DateTime expirationDate;
   final num goalValue;
 
   Goals({
     required this.name,
     required this.description,
-    required this.imageUrl,
+    required this.startDate,
     required this.expirationDate,
     required this.goalValue,
   });
@@ -17,7 +17,7 @@ class Goals {
     return Goals(
       name: json['name'],
       description: json['description'],
-      imageUrl: json['imageUrl'],
+      startDate: DateTime.parse(json['startDate']),
       expirationDate: DateTime.parse(json['expirationDate']),
       goalValue: json['goalValue'],
     );
@@ -27,7 +27,7 @@ class Goals {
     return {
       'name': name,
       'description': description,
-      'imageUrl': imageUrl,
+      'startDate': startDate.toIso8601String(),
       'expirationDate': expirationDate.toIso8601String(),
       'goalValue': goalValue,
     };
