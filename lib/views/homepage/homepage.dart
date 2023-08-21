@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:metas_academia/views/goals-form/goals_form.dart';
 import 'package:metas_academia/views/login-form/login_form.dart';
@@ -5,6 +7,8 @@ import '../../models/current_user.dart';
 import '../../models/goals.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../helper.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class HomePage extends StatefulWidget {
   final CurrentUser currentUser;
@@ -16,6 +20,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  void _refreshPage() {
+    setState(() {}); // Trigger widget rebuild
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +49,7 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             FutureBuilder<List<Goals>>(
-              future: fetchGoals(), // Call the function to fetch goals for the current user
+              future: fetchGoals(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const CircularProgressIndicator();
@@ -50,7 +57,6 @@ class _HomePageState extends State<HomePage> {
                   return Text('Error: ${snapshot.error}');
                 } else {
                   final goalsList = snapshot.data ?? [];
-                  // Display the list of goals using the ListView or any other widget
                   return Expanded(
                     child: SingleChildScrollView(
                       child: ListView.builder(
@@ -58,16 +64,41 @@ class _HomePageState extends State<HomePage> {
                         itemCount: goalsList.length,
                         itemBuilder: (context, index) {
                           final goal = goalsList[index];
-                          final daysLeft = calculateDaysLeft(goal.startDate, goal.expirationDate);
+                          final today = DateTime.now();
+                          final daysLeft = calculateDaysLeft(today, goal.expirationDate);
                           return Padding(
                             padding: const EdgeInsets.only(right: 16, left: 16, bottom: 8),
                             child: Card(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  ListTile(
-                                    title: Text(goal.name),
-                                    subtitle: Text('$daysLeft dias restantes'),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ListTile(
+                                          title: Text(goal.name),
+                                          subtitle: Text('$daysLeft dias restantes'),
+                                        ),
+                                      ),
+                                      FutureBuilder<num>(
+                                        future: countProgressOfGoal(goal.id!, widget.currentUser.id!),
+                                        builder: (context, snapshot) {
+                                          if (snapshot.connectionState == ConnectionState.waiting) {
+                                            return const CircularProgressIndicator();
+                                          } else if (snapshot.hasError) {
+                                            return Text('Error: ${snapshot.error}');
+                                          } else {
+                                            final progressCount = snapshot.data;
+                                            return Text(
+                                              '$progressCount/${goal.goalValue} dias',
+                                              style: const TextStyle(
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            );
+                                          }
+                                        },
+                                      ),
+                                    ],
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
@@ -76,17 +107,7 @@ class _HomePageState extends State<HomePage> {
                                   ButtonBar(
                                     children: [
                                       TextButton(
-                                        onPressed: () {
-                                          // Implement the logic to view the goal
-                                          // For example, navigate to a new page where the user can view the goal details.
-                                        },
-                                        child: const Text('Abrir meta'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          // Implement the logic to add progress to the goal
-                                          // For example, navigate to a new page where the user can update progress.
-                                        },
+                                        onPressed: () => addProgressAndChooseImage(context, goal.id!, widget.currentUser.id!, _refreshPage),
                                         child: const Text('Adicionar progresso'),
                                       ),
                                     ],
@@ -113,11 +134,8 @@ class _HomePageState extends State<HomePage> {
             MaterialPageRoute(builder: (context) => const GoalsForm()),
           );
           if (newGoalId != null) {
-            // Fetch the updated list of goals when a new goal is created
-            // You can choose to do this in any way that works for your application
             setState(() {
-              // Here you can call the function to fetch the updated list of goals or update the list using the newGoalId
-              fetchGoals();
+              _refreshPage();
             });
           }
         },
@@ -136,6 +154,7 @@ Future<List<Goals>> fetchGoals() async {
     final goalsList = snapshot.docs.map((doc) {
       final data = doc.data();
       return Goals(
+        id: doc.id,
         name: data['name'],
         description: data['description'],
         startDate: DateTime.parse(data['startDate']),
@@ -148,5 +167,91 @@ Future<List<Goals>> fetchGoals() async {
   } catch (e) {
     showToast('Error fetching goals: $e');
     return [];
+  }
+}
+
+Future<void> addProgressAndChooseImage(BuildContext context, String goalId, String userId, Function refreshPage) async {
+  bool progressAddedToday = await checkProgressForToday(goalId, userId);
+
+  if (progressAddedToday) {
+    showToast('Progresso do dia já adicionado. Tente novamente amanhã');
+    return;
+  }
+
+  // ignore: use_build_context_synchronously
+  final source = await showDialog<ImageSource>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Escolha a origem da imagem'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, ImageSource.camera);
+            },
+            child: const Text('Câmera'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, ImageSource.gallery);
+            },
+            child: const Text('Galeria'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (source != null) {
+    final pickedFile = await ImagePicker().pickImage(source: source);
+
+    if (pickedFile != null) {
+      await uploadImageToStorage(pickedFile.path, goalId, userId, refreshPage);
+      showToast('Progresso adicionado!');
+    }
+  }
+}
+
+Future<bool> checkProgressForToday(String goalId, String userId) async {
+  final Reference storageRef = FirebaseStorage.instance.ref().child('users/$userId/goals/$goalId/progress');
+  // get last upload
+  final ListResult result = await storageRef.list();
+  final List<Reference> allFiles = result.items;
+  if (allFiles.isNotEmpty) {
+    // final lastFile = allFiles.last;
+  }
+  return false;
+}
+
+Future<void> uploadImageToStorage(String imagePath, String goalId, String userId, Function refreshPage) async {
+  final Reference storageRef = FirebaseStorage.instance.ref().child('users/$userId/goals/$goalId/progress');
+
+  File imageFile = File(imagePath);
+
+  String todayAsString = DateTime.now().toString();
+  String imageFileName = 'progress_$todayAsString.jpg';
+
+  UploadTask uploadTask = storageRef.child(imageFileName).putFile(imageFile);
+
+  await uploadTask.whenComplete(() {
+    showToast('Imagem enviada com sucesso!');
+    refreshPage();
+  });
+}
+
+Future<num> countProgressOfGoal(String goalId, String userId) async {
+  try {
+    final Reference storageRef = FirebaseStorage.instance.ref().child('users/$userId/goals/$goalId/progress');
+    if (storageRef.fullPath.isEmpty) {
+      return 0;
+    }
+
+    final ListResult result = await storageRef.list();
+    final List<Reference> allFiles = result.items;
+
+    return allFiles.length;
+  } catch (e) {
+    showToast('Error counting progress: $e');
+    return 0;
   }
 }

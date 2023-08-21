@@ -1,9 +1,11 @@
 class CurrentUser {
+  final String? id;
   final String name;
   final String email;
-  final String? profilePictureUrl; // This can be nullable in case the user doesn't have a profile picture.
+  final String? profilePictureUrl;
 
   CurrentUser({
+    this.id,
     required this.name,
     required this.email,
     this.profilePictureUrl,

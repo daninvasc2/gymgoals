@@ -1,4 +1,5 @@
 class Goals {
+  final String? id;
   final String name;
   final String description;
   final DateTime startDate;
@@ -6,6 +7,7 @@ class Goals {
   final num goalValue;
 
   Goals({
+    this.id,
     required this.name,
     required this.description,
     required this.startDate,
@@ -15,6 +17,7 @@ class Goals {
 
   factory Goals.fromJson(Map<String, dynamic> json) {
     return Goals(
+      id: json['id'],
       name: json['name'],
       description: json['description'],
       startDate: DateTime.parse(json['startDate']),
@@ -25,6 +28,7 @@ class Goals {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'description': description,
       'startDate': startDate.toIso8601String(),

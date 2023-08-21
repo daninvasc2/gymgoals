@@ -37,6 +37,7 @@ class _LoginFormState extends State<LoginForm> {
         String userName = userSnapshot.get('name');
 
         CurrentUser currentUser = CurrentUser(
+          id: userCredential.user!.uid,
           name: userName,
           email: userCredential.user!.email!,
           profilePictureUrl: imageUrl,
